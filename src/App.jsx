@@ -1,6 +1,6 @@
-
+import LogIn from './LogIn.jsx';
+import Register from './Register.jsx';
 import { createUserWithEmailAndPassword } from 'firebase/auth'
-import SignUp from './SignUp.jsx'
 import { auth, db } from './firebase';
 console.log('Firebase loaded:', auth, db);
 import { useState } from 'react'
@@ -13,7 +13,10 @@ function App() {
   const [count, setCount] = useState(0)
 
   return (
-    <SignUp />
+    <div>
+      <Register />
+      <LogIn />
+    </div>
   )
 }
 
