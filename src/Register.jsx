@@ -1,3 +1,5 @@
+import { doc, setDoc } from 'firebase/firestore'
+import { db } from './firebase'
 import { auth } from './firebase'
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
@@ -11,6 +13,31 @@ function Register() {
     function handleSubmit(e) {
         e.preventDefault()
 
+        if (fullName, email, password, repeatPassword == ''){
+            setMessage('Please enter your credentials')
+        return
+        }
+
+        if (fullName == '') {
+            setMessage('Please enter your full name')
+        return
+        }
+
+        if (email == '') {
+            setMessage('Please enter your email')
+        return
+        }
+
+        if (password == '') {
+            setMessage('Please enter your password')
+        return
+        }
+
+        if (repeatPassword == '') {
+            setMessage('Please repeat your password')
+        return
+        }
+
         if (password !== repeatPassword) {
             setMessage( 'Passwords do not match')
         return
@@ -20,6 +47,12 @@ function Register() {
         .then((userCredential) => {
             console.log('Account created:', userCredential.user.email)
             setMessage('Account successfully created!')
+            setDoc(doc(db, "users", userCredential.user.uid), {
+                email: email,
+                fullName: fullName
+            })
+            .then(() => console.log("User document created"))
+            .catch((error) => console.log("Firestore error:", error.message))
 
         })
         .catch((error) => {
