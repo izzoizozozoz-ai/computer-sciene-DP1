@@ -1,8 +1,20 @@
-import { doc, setDoc } from 'firebase/firestore'
+import {doc, setDoc, getDoc, updateDoc, arrayUnion} from 'firebase/firestore'
 import { db } from './firebase'
 import { auth } from './firebase'
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
+
+function generateFamilyCode() {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    let code = ""
+    for (let i = 0; i < 6; i+=1) {
+        const randomIndex = Math.floor(Math.random() * characters.length)
+        const randomChar = characters.charAt(randomIndex)
+        code += randomChar
+    }
+    return code
+}
+
 function Register() {
     const [fullName, setfullName] = useState('')
     const [email, setEmail] = useState('')
@@ -12,28 +24,23 @@ function Register() {
     const [familyCode, setFamilyCode] = useState('')
     function handleSubmit(e) {
         e.preventDefault()
-
-        if (fullName, email, password, repeatPassword == ''){
-            setMessage('Please enter your credentials')
-        return
-        }
-
-        if (fullName == '') {
+        
+        if (fullName === '') {
             setMessage('Please enter your full name')
         return
         }
 
-        if (email == '') {
+        if (email === '') {
             setMessage('Please enter your email')
         return
         }
 
-        if (password == '') {
+        if (password === '') {
             setMessage('Please enter your password')
         return
         }
 
-        if (repeatPassword == '') {
+        if (repeatPassword === '') {
             setMessage('Please repeat your password')
         return
         }
@@ -47,21 +54,59 @@ function Register() {
         .then((userCredential) => {
             console.log('Account created:', userCredential.user.email)
             setMessage('Account successfully created!')
-            setDoc(doc(db, "users", userCredential.user.uid), {
-                email: email,
-                fullName: fullName
+            const userID = userCredential.user.uid
+            
+            if (familyCode === '') {
+                const newCode = generateFamilyCode()
+                
+                setDoc(doc(db, "families", newCode), {
+                    groupCode: newCode,
+                    memberIDs: [userID],
+                    createdBy: userID
+                })
+                .then(() => console.log("Family created: ", newCode))
+                .catch((error) => console.log("Family error:", error.message))
+                
+                setDoc(doc(db, "users", userCredential.user.uid), {
+                    email: email,
+                    fullName: fullName,
+                    familyGroupID: newCode
+                })
+                .then(() => console.log("User document created"))
+                .catch((error) => console.log("Firestore error:", error.message))
+            } else {
+            getDoc(doc(db, "families", familyCode))
+            .then((familyDoc) => {
+                if (familyDoc.exists()) {
+                    updateDoc(doc(db, "families", familyCode), {
+                        memberIDs: arrayUnion(userID)
+                    })
+                    .then(() => console.log("Joined family:", familyCode))
+                    .catch((error) => console.log("Update error", error.message))
+                    
+                    setDoc(doc(db, "users", userCredential.user.uid), {
+                        email: email,
+                        fullName: fullName,
+                        familyGroupID: familyCode
+                    })
+                    .then(() => console.log("Joined family:", familyCode))
+                    .catch((error) => console.log("User document created", error.message))
+                } else {
+                    setMessage("Incorrect family code")
+                
+                }
             })
-            .then(() => console.log("User document created"))
-            .catch((error) => console.log("Firestore error:", error.message))
-
-        })
+            .catch((error) => console.log("Lookup error:", error.message))
+            }
+        })       
         .catch((error) => {
             console.log('Error:', error.message)
             setMessage(error.message)
-        })
+        })    
     }
     return(
         <div>
+            <h2>Register</h2>
             <form onSubmit = {handleSubmit}>
                  <input type="text" placeholder="Enter Full Name" value={fullName} onChange={(e) => setfullName(e.target.value)}/>
                  <input type="email" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)}/>
@@ -71,7 +116,6 @@ function Register() {
                  <button type="submit">Register</button>
             </form>
             <p>{message}</p>
-        </div>
-    )
+        </div>)
 }
 export default Register

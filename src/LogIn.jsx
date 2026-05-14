@@ -19,6 +19,7 @@ function LogIn() {
     }
     return(
         <div>
+            <h2>Log in</h2>
             <form onSubmit = {handleSubmit}>
                  <input type="email" placeholder="Enter email" value={email} onChange={(e) => setEmail(e.target.value)}/>
                  <input type="password" placeholder="Enter password" value={password} onChange={(e) => setPassword(e.target.value)}/>
