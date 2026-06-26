@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc} from "firebase/firestore"
+import { collection, addDoc, query, where, deleteDoc, doc, updateDoc, onSnapshot} from "firebase/firestore"
 import { db } from './firebase'
 
 function GroceryList({ familyGroupID }) {
@@ -8,24 +8,24 @@ function GroceryList({ familyGroupID }) {
     const [editingItemID, setEditingItemID] = useState(null)
     const [editedItemName, setEditedItemName] = useState('')
 
-    function refreshItems() {
-        const itemsQuery = query(
-            collection(db, "groceryItems"),
-            where("familyGroupID", "==", familyGroupID)
-        )
-        getDocs(itemsQuery).then((querySnapshot) => {
-            const itemsList = []
-            querySnapshot.forEach((itemDoc) => {
-                itemsList.push({ id: itemDoc.id, ...itemDoc.data() })
-            })
-            setItems(itemsList)
-        })
-    }
 
     useEffect(() => {
         if (familyGroupID) {
-            refreshItems()
+            const itemsQuery = query(
+                collection(db, "groceryItems"),
+                where("familyGroupID", "==", familyGroupID)
+            )
+
+            const unsubscribe = onSnapshot(itemsQuery, (querySnapshot) => {
+                const itemsList = []
+                querySnapshot.forEach((itemDoc) => {
+                    itemsList.push({ id:itemDoc.id, ...itemDoc.data() })
+                })
+                setItems(itemsList)
+            })
+            return () => unsubscribe()
         }
+          
     }, [familyGroupID])
 
     function handleAddItem(e) {
@@ -41,7 +41,6 @@ function GroceryList({ familyGroupID }) {
         })
         .then(() => {
             setItemName('')
-            refreshItems()
         })
         .catch((error) => console.log("Add item error", error.message))
     }
@@ -50,7 +49,6 @@ function GroceryList({ familyGroupID }) {
         deleteDoc(doc(db, "groceryItems", itemID))
         .then(() => {
             console.log("Item Deleted:", itemID) 
-            refreshItems()
         })
         .catch((error) => console.log("Delete error:", error.message))
     }
@@ -78,7 +76,6 @@ function GroceryList({ familyGroupID }) {
         .then(() => {
             setEditingItemID(null)
             setEditedItemName('')
-            refreshItems()
         })
         .catch((error) => console.log("Edit error:", error.message))
     }
@@ -87,7 +84,6 @@ function GroceryList({ familyGroupID }) {
         updateDoc(doc(db, "groceryItems", item.id), {
             isPurchased: !item.isPurchased
         })
-        .then(() => refreshItems())
         .catch((error) => console.log("Toggle error:", error.message))
     }
 
@@ -126,7 +122,7 @@ function GroceryList({ familyGroupID }) {
                                         onChange={() => handleToggleBought(item)}
                                     />
                                     <span>{item.name}</span>
-                                    <button onClick={() => handleStartEdit(item)}>Edit</button>
+                                    <button onClick={() => handleEdit(item)}>Edit</button>
                                     <button onClick={() => handleDeleteItem(item.id)}>Delete</button>
                                 </>
                             )}

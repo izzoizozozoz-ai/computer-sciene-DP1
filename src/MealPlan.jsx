@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import { collection, addDoc, getDocs, query, where, deleteDoc, doc, updateDoc, getDoc} from "firebase/firestore"
+import { collection, addDoc, query, where, deleteDoc, doc, updateDoc, getDoc, onSnapshot} from "firebase/firestore"
 import { db } from './firebase'
 
 
@@ -41,15 +41,15 @@ function MealPlan({ familyGroupID }){
                 collection(db, "meals"),
                 where("familyGroupID", "==", familyGroupID)
             )
-            getDocs(mealsQuery)
-            .then((querySnapshot) => {
+            
+            const unsubscribe = onSnapshot(mealsQuery, (querySnapshot) => {
                 const mealsList = []
                 querySnapshot.forEach((mealDoc) => {
                     mealsList.push({ id: mealDoc.id, ...mealDoc.data()})
                 })
                 setMeals(mealsList)
             })
-            .catch((error) => console.log("Erroe fetching meals:", error.message))
+            return () => unsubscribe()
         }
     }, [familyGroupID])
 
@@ -60,10 +60,10 @@ function MealPlan({ familyGroupID }){
             return
         }
 
-if (selectedCook ==='') {
-    console.log("Please pick a cook")
-    return
-}
+        if (selectedCook ==='') {
+        console.log("Please pick a cook")
+        return
+        }
 
         addDoc(collection(db, "meals"), {
             name: mealName,
@@ -75,7 +75,7 @@ if (selectedCook ==='') {
             console.log("Meal added:", mealName, "on", selectedDay)
             setMealName('')
             refreshMeals()
-            setSelectedCook()
+            setSelectedCook('')
         })
         .catch((error) => console.log("Add meal error:", error.message))
     }
@@ -83,7 +83,7 @@ if (selectedCook ==='') {
     function handlerDeleteMeal(mealId) {
         deleteDoc(doc(db, "meals", mealId))
         .then(() => {
-            console.log("Meal Deleted:", mealId) // refreshes meal list
+            console.log("Meal Deleted:", mealId) 
             refreshMeals()
         })
         .catch((error) => console.log("Delete error:", error.message))
@@ -110,7 +110,6 @@ if (selectedCook ==='') {
 
     function handleEdit(meal) {
         setEditingMealId(meal.id)
-        setEditedName(meal.name) // pre fill input with the current name
     }
 
     function handleSaveEdit(mealId) {
@@ -124,7 +123,7 @@ if (selectedCook ==='') {
         })
         .then(() => {
             console.log("Meal updated:", mealId)
-            setEditingMealId(null) // exit edit mode
+            setEditingMealId(null) 
             setEditedName('')
             refreshMeals()
         })

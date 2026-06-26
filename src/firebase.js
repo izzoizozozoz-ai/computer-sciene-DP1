@@ -1,8 +1,6 @@
-//https://firebase.google.com/docs/auth/web/start#add-initialize-sdk
-//https://firebase.google.com/docs/firestore/quickstart#initialize
+
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
-//initializing firebase
 import { initializeApp } from 'firebase/app';
 
 

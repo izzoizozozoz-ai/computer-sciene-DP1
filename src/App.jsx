@@ -2,6 +2,7 @@ import LogIn from './LogIn.jsx';
 import Register from './Register.jsx';
 import MealPlan from './MealPlan.jsx';
 import GroceryList from './GroceryList.jsx';
+import Account from './Account.jsx';
 
 import { auth, db } from './firebase';
 import { useState, useEffect } from 'react'
@@ -51,10 +52,12 @@ useEffect(() => {
           
           {currentScreen === 'meals' && <MealPlan familyGroupID={familyGroupID} />}
           {currentScreen === 'grocery' && <GroceryList familyGroupID={familyGroupID} />}
+          {currentScreen === 'account' && <Account user={user} familyGroupID={familyGroupID} />}
           
           <div>
               <button onClick={() => setCurrentScreen('meals')}>Meals</button>
               <button onClick={() => setCurrentScreen('grocery')}>Grocery</button>
+              <button onClick={() => setCurrentScreen('account')}>Account</button>
           </div>
           <button onClick={handleSignOut}>Sign Out</button>
         </div>
